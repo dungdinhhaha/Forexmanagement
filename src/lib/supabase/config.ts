@@ -18,20 +18,52 @@ const hasValidConfig = (url: string, key: string) => {
 const createMockClient = () => {
   console.warn('⚠️ Using mock Supabase client. Database operations will not work.');
   
+  // Tạo các phương thức mock để phục vụ TypeScript
+  const mockQueryBuilder = () => {
+    const builder: any = {
+      select: () => builder,
+      insert: () => builder,
+      update: () => builder,
+      delete: () => builder,
+      eq: () => builder,
+      neq: () => builder,
+      gt: () => builder,
+      gte: () => builder,
+      lt: () => builder,
+      lte: () => builder,
+      filter: () => builder,
+      match: () => builder,
+      in: () => builder,
+      contains: () => builder,
+      containedBy: () => builder,
+      order: () => builder,
+      range: () => builder,
+      limit: () => builder,
+      single: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      maybeSingle: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      then: () => Promise.resolve({ data: null, error: new Error('Supabase is not configured') })
+    };
+    
+    return builder;
+  };
+  
   // Tạo các phương thức giả cho client
   return {
-    from: () => ({
-      select: () => ({ data: null, error: new Error('Supabase is not configured') }),
-      insert: () => ({ data: null, error: new Error('Supabase is not configured') }),
-      update: () => ({ data: null, error: new Error('Supabase is not configured') }),
-      delete: () => ({ data: null, error: new Error('Supabase is not configured') }),
-    }),
+    from: () => mockQueryBuilder(),
+    rpc: () => ({ data: null, error: new Error('Supabase is not configured') }),
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
       signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase is not configured') }),
       signOut: () => Promise.resolve({ error: null }),
     },
-    // Thêm các phương thức khác khi cần
+    // Hỗ trợ các phương thức Supabase khác
+    storage: {
+      from: () => ({
+        upload: () => ({ data: null, error: new Error('Supabase is not configured') }),
+        download: () => ({ data: null, error: new Error('Supabase is not configured') }),
+        list: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      })
+    }
   };
 };
 
