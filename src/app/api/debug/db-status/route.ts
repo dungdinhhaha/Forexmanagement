@@ -53,13 +53,8 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
     
-    // Kiểm tra bảng và schema
-    const { data: tableInfo, error: schemaError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public');
-    
-    const tables = tableInfo?.map(t => t.table_name) || [];
+    // Không kiểm tra thông tin bảng và schema do vấn đề TypeScript
+    const tables: string[] = [];
     
     return NextResponse.json({
       auth: { 
