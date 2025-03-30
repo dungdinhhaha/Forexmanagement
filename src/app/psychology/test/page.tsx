@@ -9,9 +9,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { psychologyService } from '@/services/client/psychology.service';
 import { PsychologyQuestion } from '@/models/psychology.model';
 import { CheckCircle2, Circle, ArrowLeft, ArrowRight, Brain, AlertCircle, Loader2, Timer } from 'lucide-react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function PsychologyTest() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [questions, setQuestions] = useState<PsychologyQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ questionId: string; answerIndex: number }[]>([]);
@@ -19,11 +21,31 @@ export default function PsychologyTest() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    loadQuestions();
+    // Kiểm tra trạng thái đăng nhập trước, sau đó mới tải câu hỏi
+    checkAuthAndLoadQuestions();
     setStartTime(new Date());
   }, []);
+
+  const checkAuthAndLoadQuestions = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('Người dùng chưa đăng nhập, chuyển hướng đến trang đăng nhập');
+        router.push('/login?returnUrl=/psychology/test');
+        return;
+      }
+      
+      setAuthenticated(true);
+      loadQuestions();
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setError('Đã xảy ra lỗi khi kiểm tra đăng nhập. Vui lòng thử lại.');
+      setLoading(false);
+    }
+  };
 
   const loadQuestions = async () => {
     try {
