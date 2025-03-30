@@ -10,12 +10,7 @@ export class PsychologyController {
   // Lấy danh sách câu hỏi
   async getQuestions() {
     try {
-      const auth = await this.authenticate();
-      
-      if (!auth.authenticated) {
-        return NextResponse.json({ error: auth.error }, { status: 401 });
-      }
-      
+      // Bỏ qua xác thực, cho phép mọi người truy cập câu hỏi
       const questions = await psychologyService.getQuestions();
       return NextResponse.json(questions);
     } catch (error) {
@@ -29,9 +24,8 @@ export class PsychologyController {
     try {
       const auth = await this.authenticate();
       
-      if (!auth.authenticated) {
-        return NextResponse.json({ error: auth.error }, { status: 401 });
-      }
+      // Nếu không xác thực được, sử dụng userId ẩn danh thay vì trả về lỗi 401
+      const userId = auth.authenticated ? auth.userId! : 'anonymous-user';
       
       const body = await request.json();
       const { answers } = body;
@@ -43,7 +37,7 @@ export class PsychologyController {
         );
       }
       
-      const result = await psychologyService.submitTest(auth.userId!, answers);
+      const result = await psychologyService.submitTest(userId, answers);
       return NextResponse.json(result);
     } catch (error) {
       console.error('Error submitting test:', error);
@@ -56,11 +50,10 @@ export class PsychologyController {
     try {
       const auth = await this.authenticate();
       
-      if (!auth.authenticated) {
-        return NextResponse.json({ error: auth.error }, { status: 401 });
-      }
+      // Nếu không xác thực được, sử dụng userId ẩn danh
+      const userId = auth.authenticated ? auth.userId! : 'anonymous-user';
       
-      const results = await psychologyService.getTestResults(auth.userId!);
+      const results = await psychologyService.getTestResults(userId);
       return NextResponse.json(results);
     } catch (error) {
       console.error('Error fetching test results:', error);
@@ -73,11 +66,10 @@ export class PsychologyController {
     try {
       const auth = await this.authenticate();
       
-      if (!auth.authenticated) {
-        return NextResponse.json({ error: auth.error }, { status: 401 });
-      }
+      // Nếu không xác thực được, sử dụng userId ẩn danh
+      const userId = auth.authenticated ? auth.userId! : 'anonymous-user';
       
-      const result = await psychologyService.getTestResultById(id, auth.userId!);
+      const result = await psychologyService.getTestResultById(id, userId);
       
       if (!result) {
         return NextResponse.json({ error: 'Test result not found' }, { status: 404 });
@@ -95,11 +87,10 @@ export class PsychologyController {
     try {
       const auth = await this.authenticate();
       
-      if (!auth.authenticated) {
-        return NextResponse.json({ error: auth.error }, { status: 401 });
-      }
+      // Nếu không xác thực được, sử dụng userId ẩn danh
+      const userId = auth.authenticated ? auth.userId! : 'anonymous-user';
       
-      const result = await psychologyService.createSampleResult(auth.userId!);
+      const result = await psychologyService.createSampleResult(userId);
       return NextResponse.json(result);
     } catch (error) {
       console.error('Error creating sample result:', error);
