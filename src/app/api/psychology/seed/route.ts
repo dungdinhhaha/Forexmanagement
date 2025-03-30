@@ -82,29 +82,24 @@ export async function POST() {
       }, { status: 503 });
     }
 
-    // Xóa tất cả câu hỏi cũ
-    const { error: deleteError } = await supabaseAdmin
+    // Thêm câu hỏi mẫu mà không xóa dữ liệu cũ
+    const result = await supabaseAdmin
       .from('psychology_questions')
-      .delete()
-      .neq('id', 0);
+      .insert(sampleQuestions);
 
-    if (deleteError) {
-      throw deleteError;
+    if (result.error) {
+      throw result.error;
     }
 
-    // Thêm câu hỏi mẫu
-    const { data, error } = await supabaseAdmin
-      .from('psychology_questions')
-      .insert(sampleQuestions)
-      .select();
-
-    if (error) {
-      throw error;
-    }
-
-    return NextResponse.json({ message: 'Đã thêm câu hỏi mẫu thành công', data });
-  } catch (error) {
+    return NextResponse.json({ 
+      message: 'Đã thêm câu hỏi mẫu thành công',
+      count: sampleQuestions.length 
+    });
+  } catch (error: any) {
     console.error('Error in POST /api/psychology/seed:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to insert sample questions',
+      message: error?.message || 'Internal server error'
+    }, { status: 500 });
   }
 } 
