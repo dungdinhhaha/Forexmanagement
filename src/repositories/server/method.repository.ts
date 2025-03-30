@@ -3,19 +3,31 @@ import { createClient } from '@/lib/supabase/server';
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export class SupabaseMethodRepository implements MethodRepository {
-  private supabase: SupabaseClient;
+  private supabase: SupabaseClient | null;
   
-  constructor(supabase: SupabaseClient) {
+  constructor(supabase: SupabaseClient | null) {
     this.supabase = supabase;
   }
   
   async checkConnection() {
     try {
       console.log('🔌 Kiểm tra kết nối Supabase...');
-      const { data, error, status } = await this.supabase.from('trade_methods').select('count(*)');
+      
+      if (!this.supabase) {
+        console.error('❌ Supabase client is not initialized');
+        return {
+          connected: false,
+          error: 'Supabase client is not initialized',
+          details: null
+        };
+      }
+      
+      const { count, error, status } = await this.supabase
+        .from('trade_methods')
+        .select('*', { count: 'exact', head: true });
       
       console.log('🔢 Status code:', status);
-      console.log('📊 Database response:', data);
+      console.log('📊 Database response count:', count);
       
       if (error) {
         console.error('❌ Lỗi kết nối database:', error);
@@ -28,7 +40,7 @@ export class SupabaseMethodRepository implements MethodRepository {
       
       return {
         connected: true,
-        tableCount: data?.[0]?.count || 0,
+        tableCount: count || 0,
         status
       };
     } catch (err) {
@@ -43,6 +55,11 @@ export class SupabaseMethodRepository implements MethodRepository {
   
   async findAllByUserId(userId: string): Promise<Method[]> {
     console.log(`📋 Repository: Lấy phương pháp của user ${userId}`);
+    
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      return [];
+    }
     
     // Log kết nối database
     const connectionStatus = await this.checkConnection();
@@ -64,6 +81,11 @@ export class SupabaseMethodRepository implements MethodRepository {
   }
   
   async findById(id: string): Promise<Method | null> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      return null;
+    }
+    
     const { data, error } = await this.supabase
       .from('trade_methods')
       .select('*')
@@ -79,6 +101,11 @@ export class SupabaseMethodRepository implements MethodRepository {
   }
   
   async create(method: Omit<Method, 'id' | 'created_at' | 'updated_at'>): Promise<Method> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await this.supabase
       .from('trade_methods')
       .insert(method)
@@ -94,6 +121,11 @@ export class SupabaseMethodRepository implements MethodRepository {
   }
   
   async update(id: string, method: Partial<Method>): Promise<Method> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await this.supabase
       .from('trade_methods')
       .update({ ...method, updated_at: new Date().toISOString() })
@@ -110,6 +142,11 @@ export class SupabaseMethodRepository implements MethodRepository {
   }
   
   async delete(id: string): Promise<void> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { error } = await this.supabase
       .from('trade_methods')
       .delete()
@@ -122,6 +159,17 @@ export class SupabaseMethodRepository implements MethodRepository {
   }
   
   async getStats(methodId: string, userId: string): Promise<MethodStats> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client is not initialized');
+      return {
+        totalTrades: 0,
+        winningTrades: 0,
+        winRate: 0,
+        totalProfit: 0,
+        averageProfit: 0
+      };
+    }
+    
     const { data, error } = await this.supabase
       .from('trades')
       .select('*')

@@ -3,6 +3,7 @@ export interface PsychologyQuestion {
   question: string;
   category: string;
   answers: PsychologyAnswer[];
+  created_at: string;
 }
 
 export interface PsychologyAnswer {

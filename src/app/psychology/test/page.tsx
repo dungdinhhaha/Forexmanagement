@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { psychologyService } from '@/services/client/psychology.service';
-import { IPsychologyQuestion } from '@/interfaces/psychology.interface';
+import { PsychologyQuestion } from '@/models/psychology.model';
 import { CheckCircle2, Circle, ArrowLeft, ArrowRight, Brain, AlertCircle, Loader2, Timer } from 'lucide-react';
 
 export default function PsychologyTest() {
   const router = useRouter();
-  const [questions, setQuestions] = useState<IPsychologyQuestion[]>([]);
+  const [questions, setQuestions] = useState<PsychologyQuestion[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<{ questionId: string; answerIndex: number }[]>([]);
   const [loading, setLoading] = useState(true);

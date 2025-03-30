@@ -4,15 +4,37 @@ import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { authService } from '@/services/AuthService';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState, useEffect } from 'react';
 
 export default function Navigation() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const { user, loading, error } = useAuth();
+  const [supabase, setSupabase] = useState<any>(null);
+  
+  useEffect(() => {
+    // Kiểm tra biến môi trường phía client
+    if (typeof window !== 'undefined' && 
+        process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setSupabase(createClientComponentClient());
+    }
+  }, []);
 
   const handleSignOut = async () => {
-    await authService.signOut();
-    router.push('/login');
-    router.refresh();
+    if (!supabase) {
+      router.push('/login');
+      return;
+    }
+    
+    try {
+      await authService.signOut();
+      router.push('/login');
+      router.refresh();
+    } catch (error) {
+      console.error('Error signing out:', error);
+      router.push('/login');
+    }
   };
 
   return (
@@ -53,12 +75,21 @@ export default function Navigation() {
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <button
-              onClick={handleSignOut}
-              className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-            >
-              Đăng xuất
-            </button>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Đăng xuất
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              >
+                Đăng nhập
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     console.log('🔍 Debug User API: Checking user authentication...');
@@ -35,28 +38,12 @@ export async function GET() {
       });
     }
     
-    // Kiểm tra các cookies
-    const allCookies = cookieStore.getAll();
-    const authCookies = allCookies.filter(c => 
-      c.name.includes('supabase') || 
-      c.name.includes('sb-') || 
-      c.name.includes('auth')
-    );
-    
     return NextResponse.json({
       hasSession: !!session,
       hasUser: !!user,
       userId: session?.user.id || user?.id || null,
       userEmail: session?.user.email || user?.email || null, 
       sessionExpires: session ? new Date(session.expires_at! * 1000).toISOString() : null,
-      authCookies: authCookies.map(c => ({
-        name: c.name,
-        // Che giấu giá trị token cho bảo mật
-        value: c.name.includes('token') ? 
-          `${c.value.substring(0, 5)}...${c.value.substring(c.value.length - 5)}` : 
-          c.value.substring(0, 15) + '...',
-        expires: c.expires
-      })),
       timestamp: new Date().toISOString()
     });
   } catch (error) {

@@ -6,6 +6,11 @@ export class TradeRepository implements ITradeRepository {
   private table = 'trades';
 
   async getAll(userId: string): Promise<Trade[]> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -16,6 +21,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async getById(id: string): Promise<Trade | null> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -27,6 +37,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async create(trade: Omit<Trade, 'id'>): Promise<Trade> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .insert([trade])
@@ -38,6 +53,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async update(id: string, trade: Partial<Trade>): Promise<Trade> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .update(trade)
@@ -50,6 +70,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async delete(id: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { error } = await supabase
       .from(this.table)
       .delete()
@@ -59,6 +84,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async getByUserId(userId: string): Promise<Trade[]> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -69,6 +99,11 @@ export class TradeRepository implements ITradeRepository {
   }
 
   async getByMethodId(methodId: string): Promise<Trade[]> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -84,6 +119,16 @@ export class TradeRepository implements ITradeRepository {
     total_profit: number;
     avg_profit: number;
   }> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return {
+        total_trades: 0,
+        win_rate: 0,
+        total_profit: 0,
+        avg_profit: 0
+      };
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')

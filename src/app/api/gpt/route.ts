@@ -2,12 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { TradeMethod } from '@/types/method';
 
-const openai = new OpenAI({
+// Check for OpenAI API key
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('⚠️ OPENAI_API_KEY is not set. GPT analysis features will be disabled.');
+}
+
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'GPT analysis service is currently unavailable',
+        message: 'OpenAI API key is not configured'
+      }, { status: 503 });
+    }
+
     const body = await request.json();
     const { type, data } = body;
 

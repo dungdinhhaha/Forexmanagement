@@ -7,22 +7,38 @@ import {
   CreatePsychologyTestResultDto,
   PsychologyRepository as IPsychologyRepository
 } from '@/models/psychology.model';
+import { createClient } from '@/lib/supabase/server';
 
 export class PsychologyRepository implements IPsychologyRepository {
   async getQuestions(): Promise<PsychologyQuestion[]> {
-    const supabase = createServerComponentClient<Database>({ cookies });
-    
-    const { data, error } = await supabase
-      .from('psychology_questions')
-      .select('*')
-      .order('id');
+    try {
+      const supabase = await createClient();
       
-    if (error) throw error;
-    return data || [];
+      if (!supabase) {
+        console.error('❌ Supabase client is not initialized');
+        return [];
+      }
+      
+      const { data, error } = await supabase
+        .from('psychology_questions')
+        .select('*')
+        .order('id');
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting questions:', error);
+      return [];
+    }
   }
   
   async saveTestResult(resultData: CreatePsychologyTestResultDto): Promise<PsychologyTestResult> {
-    const supabase = createServerComponentClient<Database>({ cookies });
+    const supabase = await createClient();
+    
+    if (!supabase) {
+      console.error('❌ Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
     
     const { data, error } = await supabase
       .from('psychology_test_results')
@@ -35,7 +51,12 @@ export class PsychologyRepository implements IPsychologyRepository {
   }
   
   async getTestResults(userId: string): Promise<PsychologyTestResult[]> {
-    const supabase = createServerComponentClient<Database>({ cookies });
+    const supabase = await createClient();
+    
+    if (!supabase) {
+      console.error('❌ Supabase client is not initialized');
+      return [];
+    }
     
     const { data, error } = await supabase
       .from('psychology_test_results')
@@ -48,7 +69,12 @@ export class PsychologyRepository implements IPsychologyRepository {
   }
   
   async getTestResultById(id: string, userId: string): Promise<PsychologyTestResult | null> {
-    const supabase = createServerComponentClient<Database>({ cookies });
+    const supabase = await createClient();
+    
+    if (!supabase) {
+      console.error('❌ Supabase client is not initialized');
+      return null;
+    }
     
     const { data, error } = await supabase
       .from('psychology_test_results')

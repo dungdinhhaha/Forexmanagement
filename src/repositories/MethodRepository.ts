@@ -9,6 +9,11 @@ export class MethodRepository implements IMethodRepository {
 
   async getAll(userId: string): Promise<IMethod[]> {
     console.log('userId', userId);
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -21,6 +26,11 @@ export class MethodRepository implements IMethodRepository {
 
   async getMethods(userId: string): Promise<TradeMethod[]> {
     console.log('Repository: getMethods called with userId', userId);
+    
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
     
     const { data, error } = await supabase
       .from(this.table)
@@ -35,6 +45,11 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async getMethodById(id: string): Promise<TradeMethod | null> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .select('*')
@@ -46,6 +61,11 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async createMethod(methodData: any): Promise<TradeMethod> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .insert([methodData])
@@ -57,6 +77,11 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async updateMethod(id: string, methodData: any): Promise<TradeMethod> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .update(methodData)
@@ -69,6 +94,11 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async deleteMethod(id: string): Promise<void> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { error } = await supabase
       .from(this.table)
       .delete()
@@ -78,6 +108,17 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async getMethodStats(methodId: string, userId: string) {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return {
+        totalTrades: 0,
+        winningTrades: 0,
+        winRate: 0,
+        totalProfit: 0,
+        averageProfit: 0
+      };
+    }
+    
     const { data, error } = await supabase
       .from('trades')
       .select('*')
@@ -103,6 +144,11 @@ export class MethodRepository implements IMethodRepository {
   }
 
   async create(method: Omit<IMethod, 'id'>): Promise<IMethod> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from(this.table)
       .insert([method])

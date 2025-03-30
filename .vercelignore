@@ -1,0 +1,17 @@
+# Ignore large files
+src/extension/images/*.exe
+src/extension/images/*.zip
+src/extension/images/*.xlsx
+
+# Ignore node_modules (Vercel installs dependencies)
+node_modules
+
+# Ignore development files
+.git
+.gitignore
+.vscode
+README.md
+
+# Ignore build artifacts
+.next
+out 

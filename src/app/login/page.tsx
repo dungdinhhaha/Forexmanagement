@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
@@ -11,9 +11,26 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [missingEnv, setMissingEnv] = useState(false);
+
+  useEffect(() => {
+    // Kiểm tra biến môi trường phía client
+    if (typeof window !== 'undefined' && 
+        (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+         !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) {
+      setMissingEnv(true);
+      setError('Cấu hình Supabase chưa được thiết lập. Vui lòng liên hệ quản trị viên.');
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (missingEnv) {
+      setError('Không thể đăng nhập do thiếu cấu hình Supabase. Vui lòng liên hệ quản trị viên.');
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -39,11 +56,15 @@ export default function LoginPage() {
       }
 
       console.log('✅ Login successful!');
-      console.log('📄 User:', {
+      console.log('👤 User logged in:', {
         id: data.user.id,
         email: data.user.email
       });
-      console.log('🔑 Session valid until:', new Date(data.session.expires_at * 1000).toISOString());
+      
+      const expiresAt = data.session?.expires_at;
+      console.log('🔑 Session valid until:', expiresAt 
+        ? new Date(expiresAt * 1000).toISOString()
+        : 'No expiration set');
 
       router.refresh();
       setTimeout(() => router.push('/dashboard'), 500);
@@ -89,6 +110,7 @@ export default function LoginPage() {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={missingEnv}
               />
             </div>
             <div>
@@ -105,6 +127,7 @@ export default function LoginPage() {
                 placeholder="Mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={missingEnv}
               />
             </div>
           </div>
@@ -112,7 +135,7 @@ export default function LoginPage() {
           <div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || missingEnv}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
             >
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}

@@ -14,6 +14,7 @@ import {
   Legend,
   ChartOptions
 } from 'chart.js';
+import { useAuth } from '@/contexts/AuthContext';
 
 ChartJS.register(
   CategoryScale,
@@ -38,7 +39,17 @@ interface AccountHistory {
 }
 
 export default function DashboardPage() {
-  const supabase = createClientComponentClient();
+  const [supabase, setSupabase] = useState<any>(null);
+  const { error: authError } = useAuth();
+
+  useEffect(() => {
+    // Kiểm tra biến môi trường phía client
+    if (typeof window !== 'undefined' && 
+        process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setSupabase(createClientComponentClient());
+    }
+  }, []);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalTrades: 0,
@@ -52,6 +63,13 @@ export default function DashboardPage() {
   const [accountHistoryError, setAccountHistoryError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Kiểm tra nếu không có biến môi trường Supabase
+    if (authError) {
+      setError('Không thể tải dữ liệu do thiếu cấu hình Supabase');
+      setIsLoading(false);
+      return;
+    }
+
     const fetchStats = async () => {
       try {
         setIsLoading(true);
@@ -96,9 +114,12 @@ export default function DashboardPage() {
       }
     };
 
-    fetchStats();
-    fetchAccountHistory();
-  }, []);
+    // Chỉ chạy các API nếu có Supabase
+    if (supabase) {
+      fetchStats();
+      fetchAccountHistory();
+    }
+  }, [supabase, authError]);
 
   const chartData = {
     labels: accountHistory.map(item => new Date(item.created_at).toLocaleDateString('vi-VN')),

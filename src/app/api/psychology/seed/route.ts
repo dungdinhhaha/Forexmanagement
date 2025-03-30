@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/config';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// Kiểm tra biến môi trường Supabase
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️ Supabase environment variables are not set. Psychology seed features will be disabled.');
+}
+
 const sampleQuestions = [
   {
     question: 'Khi thị trường biến động mạnh, bạn thường:',
@@ -66,6 +74,14 @@ const sampleQuestions = [
 
 export async function POST() {
   try {
+    // Kiểm tra supabaseAdmin có tồn tại không
+    if (!supabaseAdmin) {
+      return NextResponse.json({ 
+        error: 'Psychology seed service is currently unavailable',
+        message: 'Supabase client is not configured'
+      }, { status: 503 });
+    }
+
     // Xóa tất cả câu hỏi cũ
     const { error: deleteError } = await supabaseAdmin
       .from('psychology_questions')

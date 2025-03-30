@@ -3,9 +3,14 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
+// Check for OpenAI API key
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('⚠️ OPENAI_API_KEY is not set. Analysis features will be disabled.');
+}
+
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,6 +23,13 @@ export async function POST(request: NextRequest) {
     if (userError || !user) {
       console.error('🚫 Auth error:', userError || 'No user found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'Analysis service is currently unavailable',
+        message: 'OpenAI API key is not configured'
+      }, { status: 503 });
     }
 
     const body = await request.json();

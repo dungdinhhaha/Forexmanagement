@@ -44,13 +44,13 @@ export class PsychologyService {
       const questions = await this.getQuestions();
       
       // Tính điểm cho từng category
-      const categoryScores: Record<string, number> = {
-        'risk_management': 0,
-        'emotional_control': 0,
-        'discipline': 0,
-        'trading_preparation': 0,
-        'trading_mindset': 0,
-        'self_improvement': 0
+      const categoryScores = {
+        risk_management: 0,
+        emotional_control: 0,
+        discipline: 0,
+        trading_preparation: 0,
+        trading_mindset: 0,
+        self_improvement: 0
       };
 
       let totalScore = 0;
@@ -63,7 +63,9 @@ export class PsychologyService {
           categoryCounts[question.category] = (categoryCounts[question.category] || 0) + 1;
           
           const score = question.answers[answer.answerIndex].score;
-          categoryScores[question.category] = (categoryScores[question.category] || 0) + score;
+          if (question.category in categoryScores) {
+            categoryScores[question.category as keyof typeof categoryScores] += score;
+          }
           totalScore += score;
         }
       });
@@ -71,9 +73,11 @@ export class PsychologyService {
       // Tính điểm trung bình cho mỗi category
       Object.keys(categoryScores).forEach(category => {
         if (categoryCounts[category] > 0) {
-          categoryScores[category] = Math.round(categoryScores[category] / categoryCounts[category]);
+          categoryScores[category as keyof typeof categoryScores] = Math.round(
+            categoryScores[category as keyof typeof categoryScores] / categoryCounts[category]
+          );
         } else {
-          delete categoryScores[category]; // Không có câu hỏi nào cho category này
+          delete categoryScores[category as keyof typeof categoryScores];
         }
       });
 

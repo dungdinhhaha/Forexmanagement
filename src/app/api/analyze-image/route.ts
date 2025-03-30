@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+// Check for OpenAI API key
 if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing OPENAI_API_KEY environment variable');
+  console.warn('⚠️ OPENAI_API_KEY is not set. Image analysis features will be disabled.');
 }
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
+}) : null;
 
 export async function POST(request: NextRequest) {
   try {
+    if (!openai) {
+      return NextResponse.json({ 
+        error: 'Image analysis service is currently unavailable',
+        message: 'OpenAI API key is not configured'
+      }, { status: 503 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
 

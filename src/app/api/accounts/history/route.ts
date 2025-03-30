@@ -2,9 +2,30 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     console.log('🔍 GET /api/accounts/history - Request received');
+    
+    // Kiểm tra biến môi trường
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('⚠️ Supabase environment variables are not set');
+      // Trả về dữ liệu mẫu khi không có biến môi trường
+      const sampleData = [
+        {
+          balance: 10000,
+          created_at: new Date(Date.now() - 12 * 86400000).toISOString()
+        },
+        {
+          balance: 11500,
+          created_at: new Date().toISOString()
+        }
+      ];
+      return NextResponse.json(sampleData);
+    }
+    
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     

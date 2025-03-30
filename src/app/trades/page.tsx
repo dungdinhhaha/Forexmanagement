@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TradeService } from '@/services/TradeService';
-import { methodService } from '@/services/MethodService';
+import { TradeService } from '@/services/client/trade.service';
+import { methodService } from '@/services/client/method.service';
 import { ITrade, ITradeStats } from '@/interfaces/trade.interface';
 import { IMethod } from '@/interfaces/method.interface';
 import Link from 'next/link';

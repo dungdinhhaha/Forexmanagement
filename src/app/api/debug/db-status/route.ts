@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { supabase } from '@/lib/supabase/config';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   try {
     console.log('🧪 Debug: Kiểm tra kết nối database');
     
+    // Kiểm tra supabase client
+    if (!supabase) {
+      return NextResponse.json({ 
+        error: 'Database service is currently unavailable',
+        message: 'Supabase client is not configured'
+      }, { status: 503 });
+    }
+    
     const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabaseClient = createRouteHandlerClient({ cookies: () => cookieStore });
     
     // Kiểm tra session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
     
     if (sessionError) {
       console.error('❌ Lỗi session:', sessionError);
@@ -27,16 +39,17 @@ export async function GET(request: NextRequest) {
     });
     
     // Kiểm tra kết nối database
-    const { data, error, status } = await supabase
+    const { data, error: countError } = await supabase
       .from('trade_methods')
-      .select('count(*)')
-      .single();
+      .select('*', { count: 'exact', head: true });
     
-    if (error) {
-      console.error('❌ Lỗi database:', error);
+    const count = data?.length;
+    
+    if (countError) {
+      console.error('❌ Lỗi database:', countError);
       return NextResponse.json({
         auth: { success: !!session, user: session?.user || null },
-        db: { success: false, error: error.message, status, details: error }
+        db: { success: false, error: countError.message, details: countError }
       }, { status: 500 });
     }
     
@@ -59,7 +72,7 @@ export async function GET(request: NextRequest) {
       },
       db: { 
         success: true, 
-        methodCount: data?.count || 0,
+        methodCount: count || 0,
         tables: tables,
         env: {
           hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,

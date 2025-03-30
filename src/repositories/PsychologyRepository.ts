@@ -3,6 +3,11 @@ import { IPsychologyQuestion, IPsychologyTestResult } from '@/interfaces/psychol
 
 export class PsychologyRepository {
   async getQuestions() {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('psychology_questions')
       .select('*')
@@ -13,6 +18,11 @@ export class PsychologyRepository {
   }
   
   async saveTestResult(userId: string, resultData: any): Promise<IPsychologyTestResult> {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      throw new Error('Database connection is not available');
+    }
+    
     const { data, error } = await supabase
       .from('psychology_test_results')
       .insert([{ ...resultData, user_id: userId }])
@@ -24,6 +34,11 @@ export class PsychologyRepository {
   }
   
   async getTestResults(userId: string) {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from('psychology_test_results')
       .select('*')
@@ -35,6 +50,11 @@ export class PsychologyRepository {
   }
   
   async getTestResultById(id: string, userId: string) {
+    if (!supabase) {
+      console.error('Supabase client is not initialized');
+      return null;
+    }
+    
     const { data, error } = await supabase
       .from('psychology_test_results')
       .select('*')

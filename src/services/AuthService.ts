@@ -4,10 +4,17 @@ import { supabase } from '@/lib/supabase/config';
 
 export class AuthService {
   private static instance: AuthService;
-  private supabase = createClientComponentClient();
+  private supabase: any = null;
   private currentUser: User | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Kiểm tra biến môi trường phía client
+    if (typeof window !== 'undefined' && 
+        process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      this.supabase = createClientComponentClient();
+    }
+  }
 
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -20,6 +27,11 @@ export class AuthService {
     if (this.currentUser) return this.currentUser;
 
     try {
+      if (!this.supabase) {
+        console.error('Supabase client is not initialized');
+        return null;
+      }
+      
       const { data: { user } } = await this.supabase.auth.getUser();
       this.currentUser = user;
       return user;
@@ -31,6 +43,11 @@ export class AuthService {
 
   async getCurrentUserId(): Promise<string | null> {
     try {
+      if (!supabase) {
+        console.error('Supabase client is not initialized');
+        return null;
+      }
+      
       const { data: { user } } = await supabase.auth.getUser();
       return user?.id || null;
     } catch (error) {
@@ -40,6 +57,11 @@ export class AuthService {
   }
 
   async signOut() {
+    if (!this.supabase) {
+      console.error('Supabase client is not initialized');
+      return;
+    }
+    
     await this.supabase.auth.signOut();
     this.currentUser = null;
   }
