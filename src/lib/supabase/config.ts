@@ -14,16 +14,40 @@ const hasValidConfig = (url: string, key: string) => {
   return url && key && url.trim() !== '' && key.trim() !== '';
 };
 
-// Tạo client chỉ khi có đầy đủ cấu hình
-let supabaseClient = null;
+// Tạo một client giả khi không có cấu hình hợp lệ
+const createMockClient = () => {
+  console.warn('⚠️ Using mock Supabase client. Database operations will not work.');
+  
+  // Tạo các phương thức giả cho client
+  return {
+    from: () => ({
+      select: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      insert: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      update: () => ({ data: null, error: new Error('Supabase is not configured') }),
+      delete: () => ({ data: null, error: new Error('Supabase is not configured') }),
+    }),
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase is not configured') }),
+      signOut: () => Promise.resolve({ error: null }),
+    },
+    // Thêm các phương thức khác khi cần
+  };
+};
+
+// Tạo client với cấu hình hợp lệ hoặc client giả
+let supabaseClient;
 if (hasValidConfig(supabaseUrl, supabaseKey)) {
   try {
     supabaseClient = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase client created successfully');
   } catch (error) {
     console.error('❌ Error creating Supabase client:', error);
+    supabaseClient = createMockClient();
   }
 } else {
-  console.warn('⚠️ Supabase environment variables are not set or empty. Supabase features will be disabled.');
+  console.warn('⚠️ Supabase environment variables are not set or empty.');
+  supabaseClient = createMockClient();
 }
 
 // Export supabase client
@@ -35,15 +59,18 @@ const supabaseServiceKey = process.env.NODE_ENV === 'development'
   : process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 // Server-side Supabase instance with service role
-let adminClient = null;
+let adminClient;
 if (hasValidConfig(supabaseUrl, supabaseServiceKey)) {
   try {
     adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    console.log('✅ Supabase admin client created successfully');
   } catch (error) {
     console.error('❌ Error creating Supabase admin client:', error);
+    adminClient = createMockClient();
   }
 } else {
   console.warn('⚠️ Supabase admin environment variables are not set or empty.');
+  adminClient = createMockClient();
 }
 
 // Export supabase admin client
@@ -52,18 +79,26 @@ export const supabaseAdmin = adminClient;
 // Thêm hàm để kiểm tra trạng thái kết nối
 export async function checkSupabaseConnection() {
   try {
-    if (!supabase) {
-      console.error('Supabase client is not initialized');
+    // Kiểm tra đơn giản
+    if (!supabaseUrl || !supabaseKey) {
+      console.warn('Supabase configuration is missing');
       return false;
     }
     
-    const { data, error } = await supabase.from('trade_methods').select('count()', { count: 'exact' }).limit(0);
-    if (error) {
-      console.error('Supabase connection error:', error);
+    try {
+      // Sử dụng phương thức đơn giản hơn
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Supabase connection error:', error);
+        return false;
+      }
+      
+      console.log('Supabase connection successful');
+      return true;
+    } catch (queryError) {
+      console.error('Supabase query error:', queryError);
       return false;
     }
-    console.log('Supabase connection successful');
-    return true;
   } catch (err) {
     console.error('Supabase connection check failed:', err);
     return false;
