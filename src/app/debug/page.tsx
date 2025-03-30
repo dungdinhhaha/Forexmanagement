@@ -53,6 +53,9 @@ export default function DebugPage() {
               <Link href="/api/debug/list-tables" passHref>
                 <Button variant="outline" className="w-full">Liệt kê bảng dữ liệu</Button>
               </Link>
+              <Link href="/api/debug/schema-info" passHref>
+                <Button variant="outline" className="w-full">Kiểm tra cấu trúc DB</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -75,6 +78,15 @@ export default function DebugPage() {
               </Link>
               <Link href="/api/psychology/sample-result" passHref>
                 <Button variant="outline" className="w-full">Tạo kết quả mẫu</Button>
+              </Link>
+              <Link href="/api/debug/psychology-service" passHref>
+                <Button variant="outline" className="w-full">Kiểm tra Psychology Service</Button>
+              </Link>
+              <Link href="/api/debug/psychology-tables" passHref>
+                <Button variant="outline" className="w-full">Kiểm tra bảng Psychology</Button>
+              </Link>
+              <Link href="/api/debug/seed-psychology" passHref>
+                <Button variant="outline" className="w-full">Seed dữ liệu Psychology</Button>
               </Link>
             </div>
           </CardContent>
