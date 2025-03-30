@@ -31,7 +31,11 @@ export async function GET() {
     });
     
     // Kết quả kiểm tra
-    const result = {
+    const result: {
+      psychology_questions: { success: boolean; count: number; error: string | null; sample: any | null };
+      psychology_test_results: { success: boolean; count: number; error: string | null; sample: any | null };
+      [key: string]: any;
+    } = {
       psychology_questions: { success: false, count: 0, error: null, sample: null },
       psychology_test_results: { success: false, count: 0, error: null, sample: null },
     };
