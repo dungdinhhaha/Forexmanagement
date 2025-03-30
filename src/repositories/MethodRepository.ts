@@ -130,8 +130,8 @@ export class MethodRepository implements IMethodRepository {
 
     const trades = data || [];
     const totalTrades = trades.length;
-    const winningTrades = trades.filter(t => t.profit && t.profit > 0).length;
-    const totalProfit = trades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const winningTrades = trades.filter((t: any) => t.profit && t.profit > 0).length;
+    const totalProfit = trades.reduce((sum: number, t: any) => sum + (t.profit || 0), 0);
 
     const stats = {
       totalTrades,

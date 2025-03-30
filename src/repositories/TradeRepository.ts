@@ -138,9 +138,9 @@ export class TradeRepository implements ITradeRepository {
 
     const trades = data || [];
     const total_trades = trades.length;
-    const winning_trades = trades.filter(t => t.profit && t.profit > 0).length;
+    const winning_trades = trades.filter((t: any) => t.profit && t.profit > 0).length;
     const win_rate = total_trades > 0 ? (winning_trades / total_trades) * 100 : 0;
-    const total_profit = trades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const total_profit = trades.reduce((sum: number, t: any) => sum + (t.profit || 0), 0);
     const avg_profit = total_trades > 0 ? total_profit / total_trades : 0;
 
     return {
