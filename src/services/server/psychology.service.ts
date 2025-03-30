@@ -40,6 +40,71 @@ export class PsychologyService {
   // Nộp bài kiểm tra và tính điểm
   async submitTest(userId: string, answers: PsychologySubmitAnswer[]): Promise<PsychologyTestResult> {
     try {
+      // Check for anonymous user
+      if (userId === "anonymous-user") {
+        console.log("Anonymous user detected, creating temporary test result without saving to database");
+        
+        // Lấy thông tin câu hỏi để tính điểm
+        const questions = await this.getQuestions();
+        
+        // Tính điểm cho từng category
+        const categoryScores = {
+          risk_management: 0,
+          emotional_control: 0,
+          discipline: 0,
+          trading_preparation: 0,
+          trading_mindset: 0,
+          self_improvement: 0
+        };
+
+        let totalScore = 0;
+        const categoryCounts: Record<string, number> = {};
+
+        answers.forEach(answer => {
+          const question = questions.find(q => q.id === answer.questionId);
+          if (question) {
+            categoryCounts[question.category] = (categoryCounts[question.category] || 0) + 1;
+            
+            const score = question.answers[answer.answerIndex].score;
+            if (question.category in categoryScores) {
+              categoryScores[question.category as keyof typeof categoryScores] += score;
+            }
+            totalScore += score;
+          }
+        });
+
+        // Tính điểm trung bình cho mỗi category
+        Object.keys(categoryScores).forEach(category => {
+          if (categoryCounts[category] > 0) {
+            categoryScores[category as keyof typeof categoryScores] = Math.round(
+              categoryScores[category as keyof typeof categoryScores] / categoryCounts[category]
+            );
+          } else {
+            delete categoryScores[category as keyof typeof categoryScores];
+          }
+        });
+
+        // Tổng điểm trung bình
+        const averageScore = Math.round(totalScore / answers.length);
+
+        // Tạo phân tích và khuyến nghị
+        const analysis = this.generateAnalysis(categoryScores);
+        const recommendations = this.generateRecommendations(categoryScores);
+
+        // Return temporary result without saving to database
+        return {
+          id: 'temp-' + Date.now().toString(),
+          user_id: userId,
+          score: averageScore,
+          category_scores: categoryScores,
+          analysis,
+          recommendations,
+          taken_at: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+      }
+      
+      // Regular user flow continues below
       // Lấy thông tin câu hỏi để tính điểm
       const questions = await this.getQuestions();
       
@@ -109,6 +174,12 @@ export class PsychologyService {
   // Lấy kết quả bài kiểm tra của người dùng
   async getTestResults(userId: string): Promise<PsychologyTestResult[]> {
     try {
+      // Special handling for anonymous users
+      if (userId === "anonymous-user") {
+        console.log("Anonymous user detected, returning empty test results");
+        return [];
+      }
+      
       return await psychologyRepository.getTestResults(userId);
     } catch (error) {
       console.error('Error fetching test results:', error);
@@ -119,6 +190,12 @@ export class PsychologyService {
   // Lấy chi tiết kết quả bài kiểm tra
   async getTestResultById(id: string, userId: string): Promise<PsychologyTestResult | null> {
     try {
+      // Special handling for anonymous users
+      if (userId === "anonymous-user") {
+        console.log("Anonymous user detected, returning null test result");
+        return null;
+      }
+      
       const result = await psychologyRepository.getTestResultById(id, userId);
       
       if (result) {
