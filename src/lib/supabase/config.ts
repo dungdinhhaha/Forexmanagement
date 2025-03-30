@@ -53,6 +53,7 @@ const createMockClient = () => {
     rpc: () => ({ data: null, error: new Error('Supabase is not configured') }),
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
       signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase is not configured') }),
       signOut: () => Promise.resolve({ error: null }),
     },
