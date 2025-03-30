@@ -15,7 +15,12 @@ async function PsychologyResultsPage() {
     }
     
     // Lấy danh sách kết quả kiểm tra
-    const results = await psychologyController.getTestResults();
+    const resultsResponse = await psychologyController.getTestResults();
+    
+    // Chuyển đổi từ NextResponse sang dữ liệu JSON
+    const results = resultsResponse instanceof Response 
+      ? await resultsResponse.json() 
+      : resultsResponse;
     
     return <ResultsPageClient results={results} />;
   } catch (error) {
