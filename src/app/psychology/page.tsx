@@ -1,6 +1,6 @@
 import { psychologyController } from '@/controllers/server/psychology.controller';
-import PsychologyPageClient from './PsychologyPageClient';
 import { redirect } from 'next/navigation';
+import PsychologyPageClient from './PsychologyPageClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

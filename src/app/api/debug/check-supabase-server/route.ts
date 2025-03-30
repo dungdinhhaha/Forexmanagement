@@ -42,7 +42,7 @@ export async function GET() {
     
     // Thực hiện truy vấn đơn giản để kiểm tra kết nối
     const { data, error } = await supabase
-      .from('users')
+      .from('trade_methods')
       .select('id')
       .limit(1);
       

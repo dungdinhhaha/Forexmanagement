@@ -50,6 +50,9 @@ export default function DebugPage() {
               <Link href="/api/debug/check-supabase-server" passHref>
                 <Button variant="outline" className="w-full">Kiểm tra Supabase (Server)</Button>
               </Link>
+              <Link href="/api/debug/list-tables" passHref>
+                <Button variant="outline" className="w-full">Liệt kê bảng dữ liệu</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
