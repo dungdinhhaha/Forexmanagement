@@ -78,7 +78,7 @@ class ApiClient {
         );
       } catch (_) {
         throw ApiException(
-          'Request failed with status code ${response.statusCode}',
+          'Request failed with status code \${response.statusCode}',
           response.statusCode,
         );
       }
