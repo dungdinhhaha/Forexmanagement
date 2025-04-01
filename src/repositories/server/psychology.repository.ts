@@ -65,6 +65,14 @@ export class SupabasePsychologyRepository implements PsychologyRepository {
         return [];
       }
       
+      // Kiểm tra xem userId có đúng định dạng UUID không
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId);
+      
+      if (!isValidUUID) {
+        console.warn('⚠️ Invalid UUID format for userId:', userId);
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from(this.resultsTable)
         .select('*')
@@ -88,6 +96,15 @@ export class SupabasePsychologyRepository implements PsychologyRepository {
       
       if (!supabase) {
         console.error('❌ Supabase admin client is not initialized');
+        return null;
+      }
+      
+      // Kiểm tra xem id và userId có đúng định dạng UUID không
+      const isValidIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+      const isValidUserIdUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId);
+      
+      if (!isValidIdUUID || !isValidUserIdUUID) {
+        console.warn('⚠️ Invalid UUID format:', { id, userId });
         return null;
       }
       
