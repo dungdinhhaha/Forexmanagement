@@ -87,11 +87,14 @@ export async function middleware(req: NextRequest) {
     console.error('💥 Middleware error:', error);
   }
 
-  // Cấu hình CORS headers cho API
-  res.headers.set('Access-Control-Allow-Origin', '*');
-  res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.headers.set('Access-Control-Max-Age', '86400'); // 24 giờ
+  // Thêm CORS headers
+  res.headers.set('Access-Control-Allow-Credentials', 'true');
+  res.headers.set('Access-Control-Allow-Origin', '*'); // Hoặc URL cụ thể của ứng dụng Flutter của bạn
+  res.headers.set('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT');
+  res.headers.set(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
 
   return res;
 }
@@ -100,5 +103,7 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/api/:path*',
+    '/api/v1/:path*',
   ],
 }; 

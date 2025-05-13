@@ -1,87 +1,117 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { BarChart, LineChart, PieChart } from 'lucide-react';
+import { IPsychologyTestResult } from '@/types/psychology';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import Link from 'next/link';
 
 interface PsychologyPageClientProps {
-  userId: string;
+  results: IPsychologyTestResult[];
 }
 
-export default function PsychologyPageClient({ userId }: PsychologyPageClientProps) {
-  const router = useRouter();
+export default function PsychologyPageClient({ results }: PsychologyPageClientProps) {
+  const [selectedResult, setSelectedResult] = useState<IPsychologyTestResult | null>(null);
+
+  // Validate results
+  if (!Array.isArray(results)) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Lỗi!</strong>
+            <span className="block sm:inline"> Dữ liệu không hợp lệ</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Kiểm tra tâm lý giao dịch
-        </h1>
+    <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Tâm lý giao dịch</h1>
+              <p className="text-gray-600">Đánh giá và cải thiện tâm lý giao dịch của bạn</p>
+            </div>
+            <Link
+              href="/psychology/test"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Làm bài kiểm tra mới
+            </Link>
+          </div>
 
-        <div className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Giới thiệu</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Bài kiểm tra tâm lý giao dịch sẽ giúp bạn đánh giá 3 khía cạnh quan trọng:
+          {results.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                <BarChart className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Chưa có kết quả</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Bạn chưa có kết quả kiểm tra nào. Hãy làm bài kiểm tra để xem phân tích.
               </p>
-              <ul className="list-disc list-inside space-y-2 text-gray-600">
-                <li>Quản lý rủi ro: Khả năng kiểm soát và quản lý rủi ro trong giao dịch</li>
-                <li>Kiểm soát cảm xúc: Khả năng giữ bình tĩnh và không để cảm xúc chi phối</li>
-                <li>Kỷ luật: Khả năng tuân thủ kế hoạch và quy tắc giao dịch</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Hướng dẫn</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="list-decimal list-inside space-y-2 text-gray-600">
-                <li>Bài kiểm tra gồm 15 câu hỏi, mỗi câu có 4 lựa chọn</li>
-                <li>Hãy chọn câu trả lời phản ánh đúng nhất suy nghĩ và hành vi của bạn</li>
-                <li>Không có câu trả lời đúng hay sai, hãy trả lời trung thực</li>
-                <li>Bạn có thể quay lại sửa câu trả lời trước khi nộp bài</li>
-                <li>Kết quả sẽ được phân tích và đưa ra các khuyến nghị phù hợp</li>
-              </ol>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Lịch sử bài kiểm tra</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Xem lại kết quả các bài kiểm tra trước và theo dõi sự tiến bộ của bạn.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => router.push('/psychology/results')}>
-                Xem lịch sử
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Bắt đầu bài kiểm tra</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Sẵn sàng để đánh giá tâm lý giao dịch của bạn?
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => router.push('/psychology/test')}>
-                Bắt đầu ngay
-              </Button>
-            </CardFooter>
-          </Card>
+              <div className="mt-6">
+                <Link
+                  href="/psychology/test"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Làm bài kiểm tra
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {results.map((result) => (
+                <motion.div
+                  key={result.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Kết quả kiểm tra - {format(new Date(result.taken_at), 'PPP', { locale: vi })}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Điểm số: {result.score}/20
+                      </p>
+                    </div>
+                    <Link
+                      href={`/psychology/results/${result.id}`}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Xem chi tiết
+                    </Link>
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Object.entries(result.category_scores).map(([category, score]) => {
+                      const value = typeof score === 'object' && score !== null && 'score' in score
+                        ? (score as any).score
+                        : score;
+                      return (
+                        <div key={category} className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-sm font-medium text-gray-900">{category}</p>
+                          <p className="text-lg font-semibold text-blue-600">{value}/20</p>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{ width: `${(value / 20) * 100}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

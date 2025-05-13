@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/config';
+import { serverAuthService } from '@/services/ServerAuthService';
+import { PsychologyRepository } from '@/repositories/PsychologyRepository';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -72,34 +74,59 @@ const sampleQuestions = [
   }
 ];
 
+const psychologyRepository = new PsychologyRepository();
+
 export async function POST() {
   try {
-    // Kiểm tra supabaseAdmin có tồn tại không
-    if (!supabaseAdmin) {
-      return NextResponse.json({ 
-        error: 'Psychology seed service is currently unavailable',
-        message: 'Supabase client is not configured'
-      }, { status: 503 });
+    const userId = await serverAuthService.getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Thêm câu hỏi mẫu mà không xóa dữ liệu cũ
-    const result = await supabaseAdmin
-      .from('psychology_questions')
-      .insert(sampleQuestions);
+    // Sample test results
+    const sampleResults = [
+      {
+        user_id: userId,
+        taken_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        category_scores: {
+          risk_management: 4,
+          emotional_control: 3,
+          discipline: 5
+        },
+        score: 12,
+        analysis: "Bạn có khả năng quản lý rủi ro tốt và tính kỷ luật cao. Tuy nhiên, cần cải thiện khả năng kiểm soát cảm xúc.",
+        recommendations: [
+          "Thực hành các kỹ thuật thiền định để cải thiện kiểm soát cảm xúc",
+          "Duy trì thói quen ghi chép nhật ký giao dịch",
+          "Tham gia các buổi thảo luận về tâm lý giao dịch"
+        ]
+      },
+      {
+        user_id: userId,
+        taken_at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days ago
+        category_scores: {
+          risk_management: 3,
+          emotional_control: 4,
+          discipline: 3
+        },
+        score: 10,
+        analysis: "Bạn có khả năng kiểm soát cảm xúc tốt, nhưng cần cải thiện về quản lý rủi ro và tính kỷ luật.",
+        recommendations: [
+          "Học thêm về quản lý vốn và rủi ro",
+          "Tạo và tuân thủ kế hoạch giao dịch chi tiết",
+          "Tham gia các khóa học về tâm lý giao dịch"
+        ]
+      }
+    ];
 
-    if (result.error) {
-      throw result.error;
-    }
+    // Insert sample results
+    const results = await Promise.all(
+      sampleResults.map(result => psychologyRepository.saveTestResult(userId, result))
+    );
 
-    return NextResponse.json({ 
-      message: 'Đã thêm câu hỏi mẫu thành công',
-      count: sampleQuestions.length 
-    });
-  } catch (error: any) {
-    console.error('Error in POST /api/psychology/seed:', error);
-    return NextResponse.json({ 
-      error: 'Failed to insert sample questions',
-      message: error?.message || 'Internal server error'
-    }, { status: 500 });
+    return NextResponse.json({ message: 'Sample data created successfully', results });
+  } catch (error) {
+    console.error('Error seeding sample data:', error);
+    return NextResponse.json({ error: 'Failed to create sample data' }, { status: 500 });
   }
 } 

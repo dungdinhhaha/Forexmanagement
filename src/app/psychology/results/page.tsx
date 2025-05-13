@@ -1,35 +1,86 @@
-import { psychologyController } from '@/controllers/server/psychology.controller';
 import { redirect } from 'next/navigation';
 import ResultsPageClient from './ResultsPageClient';
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { psychologyService } from '@/services/PsychologyService';
+import { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+export const metadata: Metadata = {
+  title: 'Kết quả test tâm lý',
+  description: 'Danh sách kết quả các bài test tâm lý của bạn',
+};
+
+function LoadingSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+            <div>
+              <Skeleton className="h-8 w-64 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-40 mt-4 md:mt-0" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="border rounded-lg p-4">
+                <Skeleton className="h-6 w-48 mb-4" />
+                <div className="grid grid-cols-3 gap-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 async function PsychologyResultsPage() {
   try {
-    // Xác thực người dùng
-    const auth = await psychologyController.authenticate();
+    // Authenticate user
+    const { authenticated, userId } = await psychologyService.authenticate();
     
-    if (!auth.authenticated) {
+    if (!authenticated || !userId) {
       redirect('/login?returnUrl=/psychology/results');
     }
+
+    // Fetch test results
+    const results = await psychologyService.getTestResults();
     
-    // Lấy danh sách kết quả kiểm tra
-    const resultsResponse = await psychologyController.getTestResults();
+    console.log('validResults:', results);
+    results.forEach(r => {
+      Object.entries(r).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+          console.log('Object field:', key, value);
+        }
+      });
+    });
     
-    // Chuyển đổi từ NextResponse sang dữ liệu JSON
-    const results = resultsResponse instanceof Response 
-      ? await resultsResponse.json() 
-      : resultsResponse;
-    
-    return <ResultsPageClient results={results} />;
+    return (
+      <Suspense fallback={<LoadingSkeleton />}>
+        <ResultsPageClient results={results || []} />
+      </Suspense>
+    );
   } catch (error) {
     console.error('Error in PsychologyResultsPage:', error);
     return (
       <div className="container mx-auto p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-          <strong className="font-bold">Lỗi!</strong>
-          <span className="block sm:inline"> Có lỗi xảy ra khi tải danh sách kết quả kiểm tra</span>
+        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Lỗi!</strong>
+            <span className="block sm:inline"> Có lỗi xảy ra khi tải danh sách kết quả kiểm tra</span>
+            <p className="mt-2 text-sm">
+              Vui lòng thử lại sau hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp tục.
+            </p>
+          </div>
         </div>
       </div>
     );

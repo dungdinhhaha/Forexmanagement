@@ -59,7 +59,7 @@ export default function MethodsPage() {
         }));
         
         console.log(`✅ Đã tải ${processedData.length} phương pháp`);
-        setMethods(processedData);
+        setMethods(processedData as Method[]);
       } catch (err) {
         console.error('💥 Lỗi khi tải phương pháp:', err);
         setError('Có lỗi xảy ra khi tải dữ liệu');
@@ -261,12 +261,11 @@ export default function MethodsPage() {
               </h1>
               <p className="text-gray-600 mt-1">Quản lý các phương pháp giao dịch của bạn</p>
             </div>
-            <Link 
-              href="/methods/new" 
-              className="mt-4 md:mt-0 bg-gradient-to-r from-primary to-primary/80"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm phương pháp
+            <Link href="/methods/new">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm phương pháp
+              </Button>
             </Link>
           </div>
 

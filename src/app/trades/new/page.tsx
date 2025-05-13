@@ -11,14 +11,14 @@ export default function NewTradePage() {
   const [methods, setMethods] = useState<IMethod[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [jsonInput, setJsonInput] = useState('');
   const [trade, setTrade] = useState<Partial<ITrade>>({
-    user_id: '72dac0a8-717f-40c2-9d9e-5d44b307d3cb',
-    trade_method_id: '',
+    trade_method_id: null,
     symbol: '',
     type: 'long',
     entry_price: 0,
     quantity: 0,
-    note: '',
+    note: null,
     status: 'open',
     entry_date: new Date().toISOString(),
     exit_price: null,
@@ -49,9 +49,26 @@ export default function NewTradePage() {
     fetchMethods();
   }, []);
 
+  const validateTrade = (trade: Partial<ITrade>): string | null => {
+    if (!trade.symbol?.trim()) return 'Vui lòng nhập cặp tiền';
+    if (!trade.type || !['long', 'short'].includes(trade.type)) return 'Loại lệnh không hợp lệ';
+    if (!trade.entry_price || trade.entry_price <= 0) return 'Giá vào phải lớn hơn 0';
+    if (!trade.quantity || trade.quantity <= 0) return 'Số lượng phải lớn hơn 0';
+    if (!trade.entry_date) return 'Vui lòng chọn ngày vào lệnh';
+    if (!trade.status || !['open', 'closed'].includes(trade.status)) return 'Trạng thái không hợp lệ';
+    if (!trade.real_backtest || !['real', 'backtest'].includes(trade.real_backtest)) return 'Loại giao dịch không hợp lệ';
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const validationError = validateTrade(trade);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
       const response = await fetch('/api/trades', {
         method: 'POST',
         headers: {
@@ -64,13 +81,38 @@ export default function NewTradePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create trade');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create trade');
       }
 
       router.push('/trades');
     } catch (error) {
       console.error('Error creating trade:', error);
-      setError('Có lỗi xảy ra khi tạo giao dịch mới');
+      setError(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tạo giao dịch mới');
+    }
+  };
+
+  const handleJsonPaste = () => {
+    try {
+      const data = JSON.parse(jsonInput);
+      setTrade({
+        trade_method_id: data.method_id || '',
+        symbol: data.pair || '',
+        type: data.type?.toLowerCase() === 'buy' ? 'long' : (data.type?.toLowerCase() === 'sell' ? 'short' : 'long'),
+        entry_price: data.entry_price || 0,
+        exit_price: data.exit_price || null,
+        quantity: data.quantity || 0,
+        note: data.note || '',
+        status: data.exit_price ? 'closed' : 'open',
+        entry_date: data.date ? new Date(data.date).toISOString() : new Date().toISOString(),
+        exit_date: data.exit_price ? new Date().toISOString() : null,
+        images: data.screenshot ? [data.screenshot] : [],
+        profit: data.profit || null,
+        real_backtest: 'real',
+      });
+      setError(null);
+    } catch (e) {
+      setError('JSON không hợp lệ!');
     }
   };
 
@@ -91,6 +133,16 @@ export default function NewTradePage() {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <span className="block sm:inline">{error}</span>
         </div>
+        <div className="mt-4">
+          <textarea
+            className="w-full border rounded p-2"
+            rows={6}
+            placeholder="Dán JSON giao dịch vào đây..."
+            value={jsonInput}
+            onChange={e => setJsonInput(e.target.value)}
+          />
+          <Button className="mt-2" onClick={handleJsonPaste} type="button">Tự động điền</Button>
+        </div>
       </div>
     );
   }
@@ -98,7 +150,16 @@ export default function NewTradePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Thêm Giao Dịch Mới</h1>
-
+      <div className="mb-6">
+        <textarea
+          className="w-full border rounded p-2"
+          rows={6}
+          placeholder="Dán JSON giao dịch vào đây..."
+          value={jsonInput}
+          onChange={e => setJsonInput(e.target.value)}
+        />
+        <Button className="mt-2" onClick={handleJsonPaste} type="button">Tự động điền</Button>
+      </div>
       <form onSubmit={handleSubmit} className="max-w-2xl bg-white shadow-md rounded-lg p-6">
         <div className="space-y-6">
           <div>
@@ -120,7 +181,6 @@ export default function NewTradePage() {
               value={trade.trade_method_id || ''}
               onChange={(e) => setTrade({ ...trade, trade_method_id: e.target.value || null })}
               className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-              required
             >
               <option value="">Chọn phương pháp</option>
               {methods.map((method) => (
@@ -161,6 +221,7 @@ export default function NewTradePage() {
             <input
               type="number"
               step="0.00001"
+              min="0"
               value={trade.entry_price}
               onChange={(e) => setTrade({ ...trade, entry_price: parseFloat(e.target.value) })}
               className="mt-1 block w-full rounded-md border border-gray-300 p-2"
@@ -173,6 +234,7 @@ export default function NewTradePage() {
             <input
               type="number"
               step="0.00001"
+              min="0"
               value={trade.quantity}
               onChange={(e) => setTrade({ ...trade, quantity: parseFloat(e.target.value) })}
               className="mt-1 block w-full rounded-md border border-gray-300 p-2"

@@ -43,18 +43,18 @@ export class AuthService {
 
   async getCurrentUserId(): Promise<string | null> {
     try {
-      if (!supabase) {
+      if (!this.supabase) {
         console.error('Supabase client is not initialized');
         return null;
       }
       
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user } } = await this.supabase.auth.getUser();
         return user?.id || null;
       } catch (authError) {
         console.warn('Error calling getUser, falling back to getSession:', authError);
         // Fallback to session if getUser is not available
-        const { data } = await supabase.auth.getSession();
+        const { data } = await this.supabase.auth.getSession();
         return data.session?.user?.id || null;
       }
     } catch (error) {

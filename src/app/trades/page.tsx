@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TradeService } from '@/services/client/trade.service';
 import { methodService } from '@/services/client/method.service';
 import { ITrade, ITradeStats } from '@/interfaces/trade.interface';
 import { IMethod } from '@/interfaces/method.interface';
@@ -22,19 +21,25 @@ export default function TradesPage() {
         setError(null);
         
         // Lấy danh sách methods
-        const methodsResponse = await fetch('/api/methods');
+        const methodsResponse = await fetch('/api/methods', {
+          credentials: 'include'
+        });
         if (!methodsResponse.ok) throw new Error('Failed to fetch methods');
         const methodsData = await methodsResponse.json();
         setMethods(methodsData);
 
         // Lấy danh sách trades
-        const tradesResponse = await fetch('/api/trades');
+        const tradesResponse = await fetch('/api/trades', {
+          credentials: 'include'
+        });
         if (!tradesResponse.ok) throw new Error('Failed to fetch trades');
         const tradesData = await tradesResponse.json();
         setTrades(tradesData);
 
         // Lấy thống kê
-        const statsResponse = await fetch('/api/trades/stats');
+        const statsResponse = await fetch('/api/trades/stats', {
+          credentials: 'include'
+        });
         if (!statsResponse.ok) throw new Error('Failed to fetch stats');
         const statsData = await statsResponse.json();
         setStats(statsData);
@@ -83,8 +88,11 @@ export default function TradesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <h1 className="text-4xl font-extrabold text-blue-700">Quản lý Giao Dịch</h1>
+      </div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Danh Sách Giao Dịch</h1>
+        <h1 className="text-3xl font-bold"></h1>
         <Link href="/trades/new" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
           Thêm Giao Dịch
         </Link>

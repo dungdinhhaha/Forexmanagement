@@ -1,37 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { methodController } from '@/controllers/server/method.controller';
+import { createClient } from '@supabase/supabase-js';
+import { serverAuthService } from '@/services/ServerAuthService';
 
-// POST /api/methods/new - Tạo phương pháp nhanh với template
+// Create Supabase client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// POST /api/methods/new - Tạo phương pháp mới
 export async function POST(request: NextRequest) {
   try {
-    const auth = await methodController.authenticate();
-    
-    if (!auth.authenticated) {
-      return NextResponse.json({ error: auth.error }, { status: 401 });
+    // Lấy userId thực tế từ auth
+    const userId = await serverAuthService.getCurrentUserId();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const body = await request.json();
-    const templateId = body.templateId;
-    
-    // Lấy template dựa vào ID (có thể lưu các templates trong DB)
-    // Đây là mẫu đơn giản
-    const templateData = {
-      name: "Phương pháp mới từ template",
-      description: "Được tạo từ template",
-      rules: ["Quy tắc mặc định 1", "Quy tắc mặc định 2"],
-      indicators: ["RSI", "MACD"],
-      timeframes: ["H4", "D1"]
-    };
-    
-    const method = await methodController.createMethod(
-      new NextRequest(request.url, {
-        body: JSON.stringify(templateData),
-        headers: request.headers,
-        method: 'POST'
-      })
-    );
-    
-    return method;
+
+    const { name, description, rules, indicators, timeframes, recommendations, total_trades, win_trades, lose_trades, draw_trades } = body;
+
+    const { data, error } = await supabase
+      .from('trade_methods')
+      .insert([
+        {
+          user_id: userId,
+          name,
+          description,
+          rules,
+          indicators,
+          timeframes,
+          recommendations: recommendations || [],
+          total_trades: total_trades || 0,
+          win_trades: win_trades || 0,
+          lose_trades: lose_trades || 0,
+          draw_trades: draw_trades || 0,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, method: data });
   } catch (error) {
     console.error('💥 API error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

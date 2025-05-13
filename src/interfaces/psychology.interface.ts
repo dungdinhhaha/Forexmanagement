@@ -1,30 +1,24 @@
 export interface IPsychologyQuestion {
-  id: string;
+  id: number;
   question: string;
-  category: 'risk_management' | 'emotional_control' | 'discipline' | 'trading_preparation' | 'trading_mindset' | 'self_improvement';
-  answers: {
+  category: string;
+  options: {
     text: string;
     score: number;
   }[];
-  created_at: string;
 }
 
 export interface IPsychologyTestResult {
   id: string;
   user_id: string;
-  score: number;
+  taken_at: string;
   category_scores: {
-    risk_management: number;
-    emotional_control: number;
-    discipline: number;
-    trading_preparation?: number;
-    trading_mindset?: number;
-    self_improvement?: number;
+    [key: string]: number;
   };
+  score: number;
   analysis: string;
   recommendations: string[];
-  taken_at: string;
-  created_at?: string;
+  created_at: string;
 }
 
 export interface IPsychologyService {

@@ -1,99 +1,78 @@
-import { 
-  PsychologyQuestion, 
-  PsychologyTestResult, 
-  PsychologySubmitAnswer 
-} from '@/models/psychology.model';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { IPsychologyQuestion, IPsychologyTestResult } from '@/interfaces/psychology.interface';
 
 export class PsychologyService {
-  // Lấy danh sách câu hỏi
-  async getQuestions(): Promise<PsychologyQuestion[]> {
-    try {
-      const response = await fetch('/api/psychology/questions');
+  private supabase = createClientComponentClient();
+
+  async getQuestions(): Promise<IPsychologyQuestion[]> {
+    const { data, error } = await this.supabase
+      .from('psychology_questions')
+      .select('*')
+      .order('id');
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch questions');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      throw error;
-    }
+    if (error) throw error;
+    return data || [];
   }
-  
-  // Nộp bài kiểm tra
-  async submitTest(answers: PsychologySubmitAnswer[]): Promise<PsychologyTestResult> {
-    try {
-      const response = await fetch('/api/psychology/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers })
-      });
+
+  async submitTest(answers: any): Promise<IPsychologyTestResult> {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Tính toán điểm và phân tích
+    const categoryScores = {
+      risk_management: this.calculateCategoryScore(answers, 'risk_management'),
+      emotional_control: this.calculateCategoryScore(answers, 'emotional_control'),
+      discipline: this.calculateCategoryScore(answers, 'discipline')
+    };
+
+    const totalScore = Object.values(categoryScores).reduce((a, b) => a + b, 0);
+    const analysis = this.generateAnalysis(categoryScores);
+    const recommendations = this.generateRecommendations(categoryScores);
+
+    const { data, error } = await this.supabase
+      .from('psychology_test_results')
+      .insert([{ 
+        user_id: user.id,
+        taken_at: new Date().toISOString(),
+        category_scores: categoryScores,
+        score: totalScore,
+        analysis: analysis,
+        recommendations: recommendations
+      }])
+      .select()
+      .single();
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit test');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error submitting test:', error);
-      throw error;
-    }
+    if (error) throw error;
+    return data;
   }
-  
-  // Lấy kết quả bài kiểm tra
-  async getTestResults(): Promise<PsychologyTestResult[]> {
-    try {
-      const response = await fetch('/api/psychology/results');
+
+  async getTestResults(): Promise<IPsychologyTestResult[]> {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await this.supabase
+      .from('psychology_test_results')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('taken_at', { ascending: false });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch test results');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching test results:', error);
-      throw error;
-    }
+    if (error) throw error;
+    return data || [];
   }
-  
-  // Lấy chi tiết kết quả bài kiểm tra
-  async getTestResultById(id: string): Promise<PsychologyTestResult> {
-    try {
-      const response = await fetch(`/api/psychology/results/${id}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch test result');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching test result:', error);
-      throw error;
-    }
+
+  private calculateCategoryScore(answers: any, category: string): number {
+    // TODO: Implement score calculation logic
+    return 0;
   }
-  
-  // Tạo kết quả mẫu
-  async createSampleResult(): Promise<PsychologyTestResult> {
-    try {
-      const response = await fetch('/api/psychology/sample', {
-        method: 'POST'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create sample result');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating sample result:', error);
-      throw error;
-    }
+
+  private generateAnalysis(scores: any): string {
+    // TODO: Implement analysis generation logic
+    return "Analysis pending";
+  }
+
+  private generateRecommendations(scores: any): string[] {
+    // TODO: Implement recommendations generation logic
+    return ["Recommendations pending"];
   }
 }
 

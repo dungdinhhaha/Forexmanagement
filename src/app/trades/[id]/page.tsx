@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ITrade } from '@/interfaces/trade.interface';
 import { IMethod } from '@/interfaces/method.interface';
 import Link from 'next/link';
 
-export default function TradeDetailPage({ params }: { params: { id: string } }) {
+export default function TradeDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
   const [trade, setTrade] = useState<ITrade | null>(null);
   const [method, setMethod] = useState<IMethod | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,7 +22,7 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
         setError(null);
 
         // Lấy thông tin trade
-        const tradeResponse = await fetch(`/api/trades/${params.id}`);
+        const tradeResponse = await fetch(`/api/trades/${id}`);
         if (!tradeResponse.ok) {
           throw new Error('Failed to fetch trade');
         }
@@ -50,13 +52,13 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
     };
 
     fetchData();
-  }, [params.id]);
+  }, [id]);
 
   const handleDelete = async () => {
     if (!confirm('Bạn có chắc chắn muốn xóa giao dịch này?')) return;
     
     try {
-      const response = await fetch(`/api/trades/${params.id}`, {
+      const response = await fetch(`/api/trades/${id}`, {
         method: 'DELETE',
       });
 
@@ -162,23 +164,23 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Loại Giao Dịch</p>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       trade.type === 'long' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {trade.type === 'long' ? 'Long' : 'Short'}
                     </span>
-                  </td>
+                  </div>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Trạng Thái</p>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       trade.status === 'open' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {trade.status === 'open' ? 'Mở' : 'Đóng'}
                     </span>
-                  </td>
+                  </div>
                 </div>
               </div>
             </div>

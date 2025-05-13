@@ -1,4 +1,5 @@
-import { methodService } from '@/services/server/method.service';
+import { MethodService } from '@/services/MethodService';
+const methodService = new MethodService();
 import MethodDetailClient from './MethodDetailClient';
 import { Loader2 } from 'lucide-react';
 import { Metadata } from 'next';
@@ -41,6 +42,18 @@ async function MethodDetailPage(props: PageProps) {
     // Fetch method data
     const method = await methodService.getMethodById(params.id, userId);
     
+    // Convert snake_case to camelCase for props compatibility
+    const methodCamel = method && {
+      ...method,
+      userId: method.user_id || '',
+      createdAt: method.created_at ? new Date(method.created_at) : new Date(),
+      updatedAt: method.updated_at ? new Date(method.updated_at) : new Date(),
+      description: method.description || '',
+      rules: method.rules || [],
+      indicators: method.indicators || [],
+      timeframes: method.timeframes || [],
+    };
+    
     // Fetch stats data
     const stats = await methodService.getMethodStats(params.id, userId);
 
@@ -54,7 +67,7 @@ async function MethodDetailPage(props: PageProps) {
       );
     }
 
-    return <MethodDetailClient method={method} stats={stats} />;
+    return <MethodDetailClient method={methodCamel!} stats={stats} />;
   } catch (error) {
     console.error('Error loading method:', error);
     return (

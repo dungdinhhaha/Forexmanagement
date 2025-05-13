@@ -24,13 +24,8 @@ export class TradeService implements ITradeService {
   }
 
   async createTrade(trade: Omit<Trade, 'id'>): Promise<Trade> {
-    const userId = await authService.getCurrentUserId();
-    if (!userId) throw new Error('User not authenticated');
-    
-    return this.repository.create({
-      ...trade,
-      user_id: userId
-    });
+    if (!trade.user_id) throw new Error('User not authenticated');
+    return this.repository.create(trade);
   }
 
   async updateTrade(id: string, trade: Partial<Trade>): Promise<Trade> {
@@ -72,8 +67,7 @@ export class TradeService implements ITradeService {
     return this.repository.getStats(userId);
   }
 
-  async closeTrade(id: string, exitPrice: number): Promise<Trade> {
-    const userId = await authService.getCurrentUserId();
+  async closeTrade(id: string, exitPrice: number, userId: string): Promise<Trade> {
     if (!userId) throw new Error('User not authenticated');
 
     const trade = await this.repository.getById(id);
@@ -94,5 +88,9 @@ export class TradeService implements ITradeService {
 
   async analyzeMarket(pair: string, timeframe: string): Promise<string> {
     return gptService.analyzeMarket(pair, timeframe);
+  }
+
+  async getAllTradesByUserId(userId: string): Promise<Trade[]> {
+    return this.repository.getAll(userId);
   }
 } 

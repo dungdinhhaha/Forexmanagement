@@ -1,17 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { tradeController } from '@/controllers/server/trade.controller';
+import { TradeService } from '@/services/TradeService';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
-/*
+const tradeService = new TradeService();
+
 // POST /api/trades/:id/close - Đóng giao dịch
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  return tradeController.closeTrade(context.params.id, request);
-}
-*/
+  try {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { user } } = await supabase.auth.getUser();
 
-// Tạm thời comment toàn bộ code để vượt qua lỗi build
-export async function POST() {
-  return NextResponse.json({ message: "API temporarily disabled" }, { status: 503 });
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { exit_price } = await request.json();
+    if (typeof exit_price !== 'number') {
+      return NextResponse.json({ error: 'Thiếu hoặc sai kiểu exit_price' }, { status: 400 });
+    }
+
+    const trade = await tradeService.closeTrade(params.id, exit_price, user.id);
+    return NextResponse.json(trade);
+  } catch (error) {
+    console.error('Error closing trade:', error);
+    return NextResponse.json({ error: (error as any)?.message || 'Failed to close trade' }, { status: 500 });
+  }
 } 

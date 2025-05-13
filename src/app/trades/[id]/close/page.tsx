@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ITrade } from '@/interfaces/trade.interface';
 import { Button } from '@/components/ui/button';
 
-export default function CloseTradePanel({ params }: { params: { id: string } }) {
+export default function CloseTradePanel() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
   const [trade, setTrade] = useState<ITrade | null>(null);
   const [exitPrice, setExitPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +19,7 @@ export default function CloseTradePanel({ params }: { params: { id: string } }) 
     const fetchTrade = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/trades/${params.id}`);
+        const response = await fetch(`/api/trades/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch trade');
         }
@@ -46,10 +48,10 @@ export default function CloseTradePanel({ params }: { params: { id: string } }) 
       }
     };
 
-    if (params.id) {
+    if (id) {
       fetchTrade();
     }
-  }, [params.id]);
+  }, [id]);
 
   const calculateProfit = (exitPrice: number): number => {
     if (!trade) return 0;
@@ -69,7 +71,7 @@ export default function CloseTradePanel({ params }: { params: { id: string } }) 
     
     try {
       setIsSubmitting(true);
-      const response = await fetch(`/api/trades/${params.id}/close`, {
+      const response = await fetch(`/api/trades/${id}/close`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +83,7 @@ export default function CloseTradePanel({ params }: { params: { id: string } }) 
         throw new Error('Failed to close trade');
       }
 
-      router.push(`/trades/${params.id}`);
+      router.push(`/trades/${id}`);
     } catch (error) {
       console.error('Error closing trade:', error);
       setError('Có lỗi xảy ra khi đóng giao dịch');
